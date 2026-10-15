@@ -12,15 +12,17 @@ Docker is the only prerequisite.
 ./run.sh
 ```
 
-With Armeria 1.42.0, the result is:
+## Before and after
 
-```text
-RESULT sharedJarFile=closed (Zip file closed)
-```
+| Armeria code | Result |
+| --- | --- |
+| 1.42.0 | `RESULT sharedJarFile=closed (Zip file closed)` |
+| Proposed fix | `RESULT sharedJarFile=open` |
 
-The scan closes the cached `JarFile` even though Spring Boot's class loader also
-uses it. The proposed fix makes the scan use an uncached connection, so the
-result becomes `sharedJarFile=open`.
+The after result was verified with the same Spring Boot executable jar, replacing
+only the `DocStringExtractor` and `ReflectionsUtil` class files in its nested
+Armeria jar with those built from the proposed change. The scan then leaves the
+`JarFile` shared with Spring Boot's class loader open.
 
 This checks the shared `JarFile` closure directly. The resulting
 `ClassNotFoundException` requires a timing race and is not needed for this check.
