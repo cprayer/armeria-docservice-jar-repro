@@ -1,11 +1,13 @@
 package repro;
 
 import java.io.InputStream;
+import java.net.JarURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -26,6 +28,10 @@ public final class Main {
 
     public static void main(String[] args) throws Exception {
         final String mode = args.length > 0 ? args[0] : "storm";
+        if ("xds-close".equals(mode)) {
+            xdsClose();
+            return;
+        }
         final int loaderThreads = args.length > 1 ? Integer.parseInt(args[1]) : 4;
         final ClassLoader cl = Main.class.getClassLoader();
         final List<String> victims = classesInJarOf(cl, PROBE);
@@ -110,6 +116,23 @@ public final class Main {
         } catch (Throwable ignored) {
         }
         return null;
+    }
+
+    private static void xdsClose() throws Exception {
+        final URL url = Main.class.getClassLoader().getResource(
+                "io/envoyproxy/envoy/config/bootstrap/v3/Bootstrap.class");
+        final JarFile shared = ((JarURLConnection) url.openConnection()).getJarFile();
+        Class.forName("com.linecorp.armeria.xds.XdsResourceReader").getMethod("typeRegistry").invoke(null);
+        String state;
+        try {
+            shared.getEntry("io/envoyproxy/envoy/config/bootstrap/v3/Bootstrap.class");
+            state = "open";
+        } catch (IllegalStateException e) {
+            state = "closed (" + e.getMessage() + ')';
+        }
+        System.out.printf("RESULT armeria=%s mode=xds-close sharedJarFile=%s%n",
+                          Version.get("armeria").artifactVersion(), state);
+        System.exit(0);
     }
 
     private static List<String> classesInJarOf(ClassLoader cl, String resource) throws Exception {

@@ -10,6 +10,7 @@ A Spring Boot executable jar with `armeria` and `armeria-grpc` only.
 - `none`: no scan, only concurrent resource lookups (control)
 - `docservice`: starts a `Server` with `GrpcService` and `DocService`, the same as a real application
 - `storm`: scans `META-INF/armeria/grpc` repeatedly with `DocStringExtractor` to widen the race window
+- `xds-close`: gets the cached `JarFile` of `armeria-xds-api`, calls `XdsResourceReader.typeRegistry()` and checks whether the `JarFile` is still open
 
 Each run then loads every class in `armeria-grpc` and counts `ClassNotFoundException`s without a cause.
 
@@ -22,6 +23,10 @@ java.lang.ClassNotFoundException: com.linecorp.armeria.client.grpc.GrpcClientBui
 	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:592)
 	at org.springframework.boot.loader.net.protocol.jar.JarUrlClassLoader.loadClass(JarUrlClassLoader.java:107)
 	at org.springframework.boot.loader.launch.LaunchedClassLoader.loadClass(LaunchedClassLoader.java:91)
+```
+
+```
+RESULT armeria=1.42.0 mode=xds-close sharedJarFile=closed (Zip file closed)
 ```
 
 Once it happens, the class loader cannot load any class from the jar that was not loaded yet until the JVM restarts.
