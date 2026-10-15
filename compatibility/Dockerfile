@@ -4,7 +4,7 @@ COPY pom.xml .
 COPY src ./src
 RUN --mount=type=cache,target=/root/.m2 set -eu; \
     mkdir -p /app/repros; \
-    for version in 2.3.4.RELEASE 2.7.18 3.5.16 4.1.1; do \
+    for version in 2.3.4.RELEASE 2.3.12.RELEASE 2.7.18 3.5.16 4.1.1; do \
         mvn -B -ntp -DskipTests -Dspring-boot.version="$version" clean package; \
         cp target/repro.jar "/app/repros/$version.jar"; \
     done

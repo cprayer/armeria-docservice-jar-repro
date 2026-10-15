@@ -4,7 +4,7 @@ import java.util.jar.JarFile;
 public final class CompatibilityMatrix {
 
     public static void main(String[] args) throws Exception {
-        final String[] versions = { "2.3.4.RELEASE", "2.7.18", "3.5.16", "4.1.1" };
+        final String[] versions = { "2.3.4.RELEASE", "2.3.12.RELEASE", "2.7.18", "3.5.16", "4.1.1" };
         for (String version : versions) {
             final String jarPath = "/app/repros/" + version + ".jar";
             try (JarFile jar = new JarFile(jarPath)) {

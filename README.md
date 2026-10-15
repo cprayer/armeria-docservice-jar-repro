@@ -39,7 +39,8 @@ non-root user, no network, a read-only filesystem, and no host mounts.
 
 The [compatibility repro](compatibility/README.md) checks the older
 `JarFile.stream()` failure that blocked the dependency upgrade. It tests
-2.3.4.RELEASE as the failing control, followed by 2.7.18, 3.5.16 and 4.1.1.
+2.3.4.RELEASE as the failing control, followed by 2.3.12.RELEASE, 2.7.18,
+3.5.16 and 4.1.1.
 Build and run the entire matrix inside Docker:
 
 ```sh
@@ -54,6 +55,7 @@ nested jars, using Docker Java 25.0.4.1 and fresh JVMs for every check:
 | Spring Boot loader | `JarFile.stream()` | `DocStringExtractor` | `XdsResourceReader` |
 | --- | --- | --- | --- |
 | 2.3.4.RELEASE | `zip file closed` | `zip file closed` | `zip file closed` |
+| 2.3.12.RELEASE | pass | descriptor found, shared jar open | type registered, shared jar open |
 | 2.7.18 | pass | descriptor found, shared jar open | type registered, shared jar open |
 | 3.5.16 | pass | descriptor found, shared jar open | type registered, shared jar open |
 | 4.1.1 | pass | descriptor found, shared jar open | type registered, shared jar open |
