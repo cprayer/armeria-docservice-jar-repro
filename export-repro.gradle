@@ -1,0 +1,21 @@
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+
+gradle.projectsEvaluated {
+    if (gradle.rootProject.findProject(':core') == null) {
+        return
+    }
+    def modules = [':core', ':grpc', ':grpc-protocol', ':protobuf'].collect {
+        gradle.rootProject.project(it)
+    }
+    gradle.rootProject.tasks.register('copyReproJars', Copy) {
+        into gradle.rootProject.layout.buildDirectory.dir('repro-libs')
+        modules.each { module ->
+            def shadedJar = module.tasks.named('shadedJar')
+            dependsOn shadedJar
+            from shadedJar.flatMap { it.archiveFile }
+        }
+        from gradle.rootProject.project(':grpc').configurations.runtimeClasspath.incoming.artifactView {
+            componentFilter { it instanceof ModuleComponentIdentifier }
+        }.files
+    }
+}

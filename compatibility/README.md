@@ -11,7 +11,8 @@ scans.
 Docker is the only prerequisite. All builds and runs use Java 25.
 
 ```sh
-docker compose -f compatibility/compose.yaml up --build --abort-on-container-exit --exit-code-from compatibility
+docker build -t reflections-boot-compatibility compatibility
+docker run --rm reflections-boot-compatibility
 ```
 
 Run this from the repository root. The image builds five executable jars with
@@ -27,8 +28,7 @@ The runner checks each jar's `Spring-Boot-Version` manifest entry, then starts a
 The 2.3.4.RELEASE runs must fail with `zip file closed`; they are the control.
 Every other run must succeed. The container exits unsuccessfully on an unexpected result.
 
-The runtime container has no network or host mounts, runs as a non-root user,
-and has a read-only filesystem. Only a small `/tmp` tmpfs is writable.
+The runtime container runs as a non-root user without host mounts.
 
 2.3.12.RELEASE is the last public 2.3.x release in
 [Maven Central](https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-loader/maven-metadata.xml).
@@ -46,7 +46,7 @@ Sources: [Reflections report](https://github.com/ronmamo/reflections/issues/279)
 
 ## Verified results
 
-Docker Compose completed all ten checks on Java 25:
+The Docker runner completed all ten checks on Java 25:
 
 | Spring Boot | `JarFile.stream()` | Reflections resource and subtype scans |
 | --- | --- | --- |

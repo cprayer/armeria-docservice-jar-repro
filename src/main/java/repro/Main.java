@@ -15,11 +15,16 @@ public final class Main {
         if (resource == null) {
             throw new IllegalStateException("armeria-grpc descriptor not found");
         }
+        System.out.println("classLoader=" + classLoader.getClass().getName());
+        System.out.println("resource=" + resource);
 
         final JarFile shared = ((JarURLConnection) resource.openConnection()).getJarFile();
         final DocStringExtractor extractor = new DocStringExtractor("META-INF/armeria/grpc", "repro.grpc.dir") {
             @Override
             protected Map<String, String> getDocStringsFromFiles(Map<String, byte[]> files) {
+                if (!files.containsKey("META-INF/armeria/grpc/armeria-main.dsc")) {
+                    throw new AssertionError("armeria-grpc descriptor was not scanned");
+                }
                 return Map.of();
             }
         };
