@@ -3,7 +3,7 @@ FROM maven:3.9-eclipse-temurin-25 AS build
 RUN git --version
 
 ARG ARMERIA_REPOSITORY=https://github.com/cprayer/armeria.git
-ARG ARMERIA_REF=7fa42d7b20cf89348c150b4c43825f331d6b3cc2
+ARG ARMERIA_REF=030f4b313cc3a62d0d8e0f7b19f67d752fe17c4d
 RUN git init /armeria \
     && git -C /armeria remote add origin "$ARMERIA_REPOSITORY" \
     && git -C /armeria fetch --depth=1 origin "$ARMERIA_REF" \

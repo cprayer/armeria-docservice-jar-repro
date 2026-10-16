@@ -19,7 +19,7 @@ docker run --rm armeria-jarfile-repro:local
 
 ### After: Reflections 0.9.12 upgrade
 
-This builds Armeria from the pinned [upgrade commit](https://github.com/cprayer/armeria/commit/7fa42d7b20cf89348c150b4c43825f331d6b3cc2)
+This builds Armeria from the pinned [upgrade commit](https://github.com/cprayer/armeria/commit/030f4b313cc3a62d0d8e0f7b19f67d752fe17c4d)
 inside Docker. The first build takes several minutes.
 
 ```sh
@@ -29,20 +29,52 @@ docker run --rm armeria-jarfile-repro:patched
 
 ### Expected results
 
-| Armeria | Output |
-| --- | --- |
-| 1.42.0 | `RESULT sharedJarFile=closed (Zip file closed)` |
-| Upgrade commit | `RESULT sharedJarFile=open` |
+| Output | Armeria 1.42.0 | Upgrade commit |
+| --- | --- | --- |
+| `RESULT sharedJarFile=` | `closed (Zip file closed)` | `open` |
+| `RESULT mode=none` | `failed=0/174` | `failed=0/174` |
+| `RESULT mode=docservice` | `failed=0/174` | `failed=0/174` |
+| `RESULT mode=storm` | `failed=173/174` with `scans` below 200 in most runs | `failed=0/174 scans=200/200` |
+
+Example output on Armeria 1.42.0:
+
+```
+RESULT sharedJarFile=closed (Zip file closed)
+RESULT mode=none failed=0/174
+RESULT mode=none failed=0/174
+RESULT mode=none failed=0/174
+RESULT mode=docservice failed=0/174
+RESULT mode=docservice failed=0/174
+RESULT mode=docservice failed=0/174
+RESULT mode=storm failed=173/174 scans=5/200
+  java.lang.ClassNotFoundException: com.linecorp.armeria.client.grpc.GrpcClientBuilder (cause=null)
+    at java.base/java.net.URLClassLoader.findClass(Unknown Source)
+    at java.base/java.lang.ClassLoader.loadClass(Unknown Source)
+    at org.springframework.boot.loader.net.protocol.jar.JarUrlClassLoader.loadClass(JarUrlClassLoader.java:107)
+    at org.springframework.boot.loader.launch.LaunchedClassLoader.loadClass(LaunchedClassLoader.java:91)
+RESULT mode=storm failed=173/174 scans=19/200
+RESULT mode=storm failed=173/174 scans=74/200
+```
 
 `Main` also prints the actual class loader and resource URL. These should show
 `LaunchedClassLoader` and `jar:nested:.../BOOT-INF/lib/...`.
 
 ## Scope
 
-`Main` obtains the cached jar containing the gRPC descriptor, runs one
+`sharedJarFile` obtains the cached jar containing the gRPC descriptor, runs one
 `DocStringExtractor` scan, checks that the descriptor was scanned, and checks
-whether the shared jar remains open. The production `ClassNotFoundException`
-timing race is outside this check.
+whether the shared jar remains open.
+
+Each `mode` line is a fresh JVM. Four threads keep reading a class from
+`armeria-grpc` while the mode runs, then every `armeria-grpc` class is loaded and
+`ClassNotFoundException`s without a cause are counted:
+
+- `none`: no scan
+- `docservice`: starts a `Server` with `GrpcService` and `DocService` once
+- `storm`: repeats `DocStringExtractor` scans with new class loader keys to widen the race window.
+  `scans` counts the scans that found the gRPC descriptor
+
+`storm` is a race, so a run can occasionally show `failed=0/174` on 1.42.0.
 
 The patched build compiles core, gRPC, gRPC protocol and protobuf from the same
 commit. It uses core's untrimmed shaded jar and skips the DocService web UI.
