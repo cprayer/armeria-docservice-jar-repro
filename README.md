@@ -6,10 +6,13 @@ checks whether the same `JarFile` is still open.
 
 ## Run
 
-Docker is the only prerequisite.
+Docker is the only prerequisite. Run these commands from the repository root:
 
 ```sh
-./run.sh
+docker build --build-arg ARMERIA_VERSION=1.42.0 -t armeria-jarfile-repro:local .
+docker run --rm --network none --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+    --cap-drop ALL --security-opt no-new-privileges --pids-limit 64 --memory 512m \
+    armeria-jarfile-repro:local
 ```
 
 ## Before and after
@@ -26,11 +29,8 @@ not add a custom URL handler or change Reflections' global Vfs configuration.
 This checks the shared `JarFile` closure directly. The resulting
 `ClassNotFoundException` requires a timing race and is not needed for this check.
 
-To try another Armeria version available in Maven:
-
-```sh
-./run.sh <armeria-version>
-```
+To try another Armeria version available in Maven, replace `ARMERIA_VERSION=1.42.0`
+in the build command, rebuild the image, and run the same `docker run` command.
 
 The build uses a Maven container. The run uses a separate JRE image with a
 non-root user, no network, a read-only filesystem, and no host mounts.
